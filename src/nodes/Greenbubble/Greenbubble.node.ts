@@ -56,17 +56,20 @@ export class Greenbubble implements INodeType {
 					endpoint: string,
 					body: Record<string, any> = {},
 				) => {
-					const options: any = {
-						method,
-						url: `${baseUrl}${endpoint}`,
-						json: true,
-					};
 					if (method === 'POST') {
-						options.form = { apiToken, ...body };
+						return this.helpers.httpRequest({
+							method,
+							url: `${baseUrl}${endpoint}`,
+							headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+							body: new URLSearchParams({ apiToken, ...Object.fromEntries(Object.entries(body).map(([k, v]) => [k, String(v)])) }).toString(),
+						});
 					} else {
-						options.qs = { apiToken, ...body };
+						return this.helpers.httpRequest({
+							method,
+							url: `${baseUrl}${endpoint}`,
+							qs: { apiToken, ...body },
+						});
 					}
-					return this.helpers.request(options);
 				};
 
 				// ── MESSAGE ───────────────────────────────────────────────────

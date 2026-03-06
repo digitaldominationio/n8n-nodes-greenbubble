@@ -1,6 +1,6 @@
 {
   "name": "n8n-nodes-greenbubble",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "n8n community node for GreenBubble.io WhatsApp automation platform",
   "keywords": [
     "n8n-community-node-package",

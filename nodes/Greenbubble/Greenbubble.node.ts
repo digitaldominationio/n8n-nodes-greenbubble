@@ -4,6 +4,7 @@ import {
 	INodeType,
 	INodeTypeDescription,
 	NodeApiError,
+	NodeConnectionTypes,
 	NodeOperationError,
 } from 'n8n-workflow';
 
@@ -21,8 +22,8 @@ export class Greenbubble implements INodeType {
 		defaults: {
 			name: 'GreenBubble',
 		},
-		inputs: ['main'],
-		outputs: ['main'],
+		inputs: [NodeConnectionTypes.Main],
+		outputs: [NodeConnectionTypes.Main],
 		credentials: [
 			{
 				name: 'greenbubbleApi',
@@ -42,7 +43,6 @@ export class Greenbubble implements INodeType {
 		const credentials = await this.getCredentials('greenbubbleApi');
 
 		const baseUrl = (credentials.baseUrl as string).replace(/\/$/, '');
-		const apiToken = credentials.apiToken as string;
 
 		for (let i = 0; i < items.length; i++) {
 			try {
@@ -57,17 +57,17 @@ export class Greenbubble implements INodeType {
 					body: Record<string, any> = {},
 				) => {
 					if (method === 'POST') {
-						return this.helpers.httpRequest({
+						return this.helpers.httpRequestWithAuthentication.call(this, 'greenbubbleApi', {
 							method,
 							url: `${baseUrl}${endpoint}`,
 							headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-							body: new URLSearchParams({ apiToken, ...Object.fromEntries(Object.entries(body).map(([k, v]) => [k, String(v)])) }).toString(),
+							body: Object.fromEntries(Object.entries(body).map(([k, v]) => [k, String(v)])),
 						});
 					} else {
-						return this.helpers.httpRequest({
+						return this.helpers.httpRequestWithAuthentication.call(this, 'greenbubbleApi', {
 							method,
 							url: `${baseUrl}${endpoint}`,
-							qs: { apiToken, ...body },
+							qs: { ...body },
 						});
 					}
 				};

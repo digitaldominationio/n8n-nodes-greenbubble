@@ -28,7 +28,7 @@ class GreenbubbleApi {
         this.authenticate = {
             type: 'generic',
             properties: {
-                qs: {
+                body: {
                     apiToken: '={{$credentials.apiToken}}',
                 },
             },
@@ -38,9 +38,6 @@ class GreenbubbleApi {
                 baseURL: '={{$credentials.baseUrl}}',
                 url: '/api/v1/whatsapp/catalog/list',
                 method: 'POST',
-                body: {
-                    apiToken: '={{$credentials.apiToken}}',
-                },
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
                 },

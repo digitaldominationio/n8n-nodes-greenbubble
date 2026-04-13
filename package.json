@@ -1,6 +1,6 @@
 {
   "name": "n8n-nodes-greenbubble",
-  "version": "0.1.10",
+  "version": "0.1.11",
   "description": "n8n community node for GreenBubble.io WhatsApp automation platform",
   "keywords": [
     "n8n-community-node-package",
@@ -19,7 +19,7 @@
     "type": "git",
     "url": "https://github.com/digitaldominationio/n8n-nodes-greenbubble"
   },
-  "main": "index.js",
+  "main": "dist/index.js",
   "scripts": {
     "build": "tsc && cp nodes/Greenbubble/greenbubble.svg dist/nodes/Greenbubble/greenbubble.svg && cp nodes/Greenbubble/greenbubble.svg dist/credentials/greenbubble.svg",
     "dev": "tsc --watch",

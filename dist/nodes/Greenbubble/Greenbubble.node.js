@@ -16,8 +16,8 @@ class Greenbubble {
             defaults: {
                 name: 'GreenBubble',
             },
-            inputs: ['main'],
-            outputs: ['main'],
+            inputs: [n8n_workflow_1.NodeConnectionTypes.Main],
+            outputs: [n8n_workflow_1.NodeConnectionTypes.Main],
             credentials: [
                 {
                     name: 'greenbubbleApi',
@@ -37,7 +37,6 @@ class Greenbubble {
         const returnData = [];
         const credentials = await this.getCredentials('greenbubbleApi');
         const baseUrl = credentials.baseUrl.replace(/\/$/, '');
-        const apiToken = credentials.apiToken;
         for (let i = 0; i < items.length; i++) {
             try {
                 const resource = this.getNodeParameter('resource', i);
@@ -45,18 +44,18 @@ class Greenbubble {
                 let responseData;
                 const callApi = async (method, endpoint, body = {}) => {
                     if (method === 'POST') {
-                        return this.helpers.httpRequest({
+                        return this.helpers.httpRequestWithAuthentication.call(this, 'greenbubbleApi', {
                             method,
                             url: `${baseUrl}${endpoint}`,
                             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                            body: new URLSearchParams({ apiToken, ...Object.fromEntries(Object.entries(body).map(([k, v]) => [k, String(v)])) }).toString(),
+                            body: Object.fromEntries(Object.entries(body).map(([k, v]) => [k, String(v)])),
                         });
                     }
                     else {
-                        return this.helpers.httpRequest({
+                        return this.helpers.httpRequestWithAuthentication.call(this, 'greenbubbleApi', {
                             method,
                             url: `${baseUrl}${endpoint}`,
-                            qs: { apiToken, ...body },
+                            qs: { ...body },
                         });
                     }
                 };

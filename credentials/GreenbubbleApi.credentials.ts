@@ -32,7 +32,7 @@ export class GreenbubbleApi implements ICredentialType {
 	authenticate: IAuthenticateGeneric = {
 		type: 'generic',
 		properties: {
-			qs: {
+			body: {
 				apiToken: '={{$credentials.apiToken}}',
 			},
 		},
@@ -43,9 +43,6 @@ export class GreenbubbleApi implements ICredentialType {
 			baseURL: '={{$credentials.baseUrl}}',
 			url: '/api/v1/whatsapp/catalog/list',
 			method: 'POST',
-			body: {
-				apiToken: '={{$credentials.apiToken}}',
-			},
 			headers: {
 				'Content-Type': 'application/x-www-form-urlencoded',
 			},

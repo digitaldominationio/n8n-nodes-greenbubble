@@ -32,6 +32,7 @@ class Greenbubble {
         };
     }
     async execute() {
+        var _a, _b;
         const items = this.getInputData();
         const returnData = [];
         const credentials = await this.getCredentials('greenbubbleApi');
@@ -270,8 +271,17 @@ class Greenbubble {
                 }
             }
             catch (error) {
+                const detail = error instanceof n8n_workflow_1.NodeApiError
+                    ? ((_a = error.description) !== null && _a !== void 0 ? _a : error.message)
+                    : error instanceof n8n_workflow_1.NodeOperationError
+                        ? error.message
+                        : error.message;
+                const responseBody = error instanceof n8n_workflow_1.NodeApiError ? (_b = error.context) === null || _b === void 0 ? void 0 : _b.data : undefined;
                 if (this.continueOnFail()) {
-                    returnData.push({ json: { error: error.message }, pairedItem: { item: i } });
+                    returnData.push({
+                        json: { error: detail, ...(responseBody !== null && responseBody !== void 0 ? responseBody : {}) },
+                        pairedItem: { item: i },
+                    });
                     continue;
                 }
                 if (error instanceof n8n_workflow_1.NodeApiError || error instanceof n8n_workflow_1.NodeOperationError)

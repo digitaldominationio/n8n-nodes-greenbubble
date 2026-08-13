@@ -278,8 +278,19 @@ export class Greenbubble implements INodeType {
 				}
 
 			} catch (error) {
+				const detail =
+					error instanceof NodeApiError
+						? (error.description ?? error.message)
+						: error instanceof NodeOperationError
+							? error.message
+							: (error as Error).message;
+				const responseBody =
+					error instanceof NodeApiError ? (error as any).context?.data : undefined;
 				if (this.continueOnFail()) {
-					returnData.push({ json: { error: (error as Error).message }, pairedItem: { item: i } });
+					returnData.push({
+						json: { error: detail, ...(responseBody ?? {}) },
+						pairedItem: { item: i },
+					});
 					continue;
 				}
 				if (error instanceof NodeApiError || error instanceof NodeOperationError) throw error;

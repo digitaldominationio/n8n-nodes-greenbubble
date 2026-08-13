@@ -12,19 +12,19 @@ export class GreenbubbleApi implements ICredentialType {
 	documentationUrl = 'https://app.greenbubble.io/developer';
 	properties: INodeProperties[] = [
 		{
-			displayName: 'API Token',
-			name: 'apiToken',
+			displayName: 'API Key',
+			name: 'apiKey',
 			type: 'string',
 			typeOptions: { password: true },
 			default: '',
 			required: true,
-			description: 'Your GreenBubble API token from the Developer Dashboard',
+			description: 'Your GreenBubble API key from the Developer Dashboard',
 		},
 		{
 			displayName: 'Base URL',
 			name: 'baseUrl',
 			type: 'string',
-			default: 'https://app.greenbubble.io',
+			default: 'https://api.greenbubble.io',
 			description: 'Base URL for the GreenBubble API (change only if self-hosted)',
 		},
 	];
@@ -32,8 +32,8 @@ export class GreenbubbleApi implements ICredentialType {
 	authenticate: IAuthenticateGeneric = {
 		type: 'generic',
 		properties: {
-			body: {
-				apiToken: '={{$credentials.apiToken}}',
+			headers: {
+				'x-api-key': '={{$credentials.apiKey}}',
 			},
 		},
 	};
@@ -41,11 +41,8 @@ export class GreenbubbleApi implements ICredentialType {
 	test: ICredentialTestRequest = {
 		request: {
 			baseURL: '={{$credentials.baseUrl}}',
-			url: '/api/v1/whatsapp/catalog/list',
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/x-www-form-urlencoded',
-			},
+			url: '/api/v2/whatsapp/senders',
+			method: 'GET',
 		},
 	};
 }

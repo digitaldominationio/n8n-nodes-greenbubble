@@ -23,70 +23,55 @@ npm install n8n-nodes-greenbubble
 ## Credentials
 
 Create a **GreenBubble API** credential with:
-- **API Token** — found in your GreenBubble Developer Dashboard at `app.greenbubble.io/developer`
-- **Base URL** — `https://app.greenbubble.io` (default, change only if self-hosted)
+- **API Key** — found in your GreenBubble Developer Dashboard at `app.greenbubble.io/developer`
+- **Base URL** — `https://api.greenbubble.io` (default, change only if self-hosted)
+
+The API key is sent as an `x-api-key` header and is bound to a workspace automatically.
 
 ---
 
 ## Supported Resources & Operations
 
+### 📡 Sender
+| Operation | Description |
+|-----------|-------------|
+| List Senders | List every active WhatsApp sender (Cloud API / Scan Device) in a workspace and copy a `sender_id` |
+
 ### 💬 Message
 | Operation | Description |
 |-----------|-------------|
-| Send Text Message | Send a plain text WhatsApp message |
-| Send Template Message | Send an approved template message with dynamic variables |
-| Send Broadcast Template | Launch a broadcast campaign |
-| Get Conversation | Fetch conversation history for a subscriber |
-| Get Delivery Status | Check delivery/read status by message ID |
-| Get PostBack List | List all post-back triggers for a phone number |
+| Send Text | Send a free-form text message |
+| Send Template | Send a Meta-approved template with body variables and header media |
+| Send Image | Send an image via public URL |
+| Send Video | Send a video via public URL |
+| Send Audio | Send an audio file via public URL |
+| Send Document | Send a document (PDF, etc.) via public URL |
+| Send Location | Send a location pin with latitude/longitude |
+| Send Reaction | React to a message with an emoji |
 
-### 👤 Subscriber
+### 👥 Group
 | Operation | Description |
 |-----------|-------------|
-| Get Subscriber | Fetch subscriber by phone number |
-| List Subscribers | Paginated list of all subscribers |
-| Create Subscriber | Add a new contact |
-| Update Subscriber | Edit subscriber name, gender, labels |
-| Delete Subscriber | Remove a subscriber |
-| Reset User Input Flow | Reset a bot conversation flow |
-| Assign to Team Member | Route chat to a specific agent |
-| Assign Custom Fields | Set custom field values |
-| List Custom Fields | Get all configured custom fields |
-| Assign Labels | Add labels to a subscriber |
-| Remove Labels | Remove labels from a subscriber |
-| Assign Sequences | Enrol subscriber in sequences |
-| Remove Sequences | Remove subscriber from sequences |
-| Add Note | Attach an internal note to a subscriber |
+| List Groups | List joined WhatsApp groups for a Scan Device sender |
+| List Group Members | List members of a joined group |
+| Send Group Message | Send a text message to a group by ID or name |
 
-### 🏷️ Label
+### 📨 Template
 | Operation | Description |
 |-----------|-------------|
-| List Labels | Get all labels for a phone number |
-| Create Label | Create a new label |
+| Create Template | Create a Meta message template for approval |
 
-### 🛍️ Catalog
+### 📢 Campaign
 | Operation | Description |
 |-----------|-------------|
-| List Catalogs | Get all catalogs |
-| Sync Catalog | Sync products from Meta catalog |
-| List Orders | Get all catalog orders |
-| Update Order Status | Change order status (Approved / Shipped / Delivered / etc.) |
+| Create Campaign | Create a broadcast template campaign |
+| List Campaigns | List broadcast campaigns |
 
-### 🤖 Bot
+### 📇 Contact
 | Operation | Description |
 |-----------|-------------|
-| Trigger Bot Flow | Send a bot flow to any number |
-| List Bot Templates | Get all bot templates for an account |
-
-### 🔗 Account
-| Operation | Description |
-|-----------|-------------|
-| Connect Account | Connect a WhatsApp Business Account via API |
-
-### 👥 User
-| Operation | Description |
-|-----------|-------------|
-| Get Direct Login URL | Generate a one-time secure login URL for a sub-user |
+| Create Contact | Create a new contact |
+| List Contacts | List all contacts |
 
 ---
 

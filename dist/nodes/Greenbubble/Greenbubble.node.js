@@ -32,7 +32,6 @@ class Greenbubble {
         };
     }
     async execute() {
-        var _a, _b;
         const items = this.getInputData();
         const returnData = [];
         const credentials = await this.getCredentials('greenbubbleApi');
@@ -42,261 +41,229 @@ class Greenbubble {
                 const resource = this.getNodeParameter('resource', i);
                 const operation = this.getNodeParameter('operation', i);
                 let responseData;
-                const callApi = async (method, endpoint, body = {}) => {
-                    if (method === 'POST') {
-                        return this.helpers.httpRequestWithAuthentication.call(this, 'greenbubbleApi', {
-                            method,
-                            url: `${baseUrl}${endpoint}`,
-                            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                            body: Object.fromEntries(Object.entries(body).map(([k, v]) => [k, String(v)])),
-                        });
-                    }
-                    else {
-                        return this.helpers.httpRequestWithAuthentication.call(this, 'greenbubbleApi', {
-                            method,
-                            url: `${baseUrl}${endpoint}`,
-                            qs: { ...body },
-                        });
-                    }
+                const callApi = async (method, endpoint, options = {}) => {
+                    return this.helpers.httpRequestWithAuthentication.call(this, 'greenbubbleApi', {
+                        method,
+                        url: `${baseUrl}${endpoint}`,
+                        qs: options.qs,
+                        body: options.body,
+                        json: method === 'POST',
+                    });
                 };
+                const buildMessage = (type, payload) => ({
+                    type,
+                    [type]: payload,
+                });
+                // ── SENDER ────────────────────────────────────────────────────
+                if (resource === 'sender') {
+                    if (operation === 'list') {
+                        const qs = {};
+                        const workspaceId = this.getNodeParameter('workspaceId', i);
+                        if (workspaceId)
+                            qs.workspace_id = workspaceId;
+                        responseData = await callApi('GET', '/api/v2/whatsapp/senders', { qs });
+                    }
+                }
                 // ── MESSAGE ───────────────────────────────────────────────────
-                if (resource === 'message') {
+                else if (resource === 'message') {
+                    const senderId = this.getNodeParameter('senderId', i);
+                    const to = this.getNodeParameter('to', i);
                     if (operation === 'sendText') {
-                        responseData = await callApi('POST', '/api/v1/whatsapp/send', {
-                            phone_number_id: this.getNodeParameter('phoneNumberId', i),
-                            phone_number: this.getNodeParameter('phoneNumber', i),
-                            message: this.getNodeParameter('message', i),
+                        responseData = await callApi('POST', '/api/v2/whatsapp/messages', {
+                            body: {
+                                sender_id: senderId,
+                                to,
+                                message: buildMessage('text', { body: this.getNodeParameter('messageBody', i) }),
+                            },
                         });
                     }
                     else if (operation === 'sendTemplate') {
-                        const templateVars = (_b = (_a = this.getNodeParameter('templateVariableValues', i)) === null || _a === void 0 ? void 0 : _a.variable) !== null && _b !== void 0 ? _b : [];
-                        const body = {
-                            phone_number_id: this.getNodeParameter('phoneNumberId', i),
-                            phone_number: this.getNodeParameter('phoneNumber', i),
-                            template_id: this.getNodeParameter('templateId', i),
+                        const template = {
+                            name: this.getNodeParameter('templateName', i),
+                            language: this.getNodeParameter('languageCode', i),
                         };
-                        // Build templateVariable-Name-Index params dynamically
-                        for (const v of templateVars) {
-                            body[`templateVariable-${v.name}-${v.index}`] = v.value;
+                        const components = [];
+                        const bodyVariables = this.getNodeParameter('bodyVariables', i);
+                        if (Array.isArray(bodyVariables) && bodyVariables.length) {
+                            components.push({
+                                type: 'body',
+                                parameters: bodyVariables.map((value) => ({ type: 'text', text: String(value) })),
+                            });
                         }
-                        const quickReply = this.getNodeParameter('quickReplyButtonValues', i);
-                        if (quickReply)
-                            body.template_quick_reply_button_values = quickReply;
-                        responseData = await callApi('POST', '/api/v1/whatsapp/send/template', body);
-                    }
-                    else if (operation === 'sendBroadcast') {
-                        responseData = await callApi('POST', '/api/v1/whatsapp/broadcast/template/send', {
-                            phone_number_id: this.getNodeParameter('phoneNumberId', i),
-                            flow_data: JSON.stringify(this.getNodeParameter('flowData', i)),
+                        const headerMedia = this.getNodeParameter('headerMedia', i);
+                        if (headerMedia && typeof headerMedia === 'object' && headerMedia.url) {
+                            const mediaType = ['image', 'video', 'document'].includes(headerMedia.type) ? headerMedia.type : 'image';
+                            components.push({
+                                type: 'header',
+                                parameters: [{ type: mediaType, [mediaType]: { link: headerMedia.url } }],
+                            });
+                        }
+                        if (components.length)
+                            template.components = components;
+                        responseData = await callApi('POST', '/api/v2/whatsapp/messages', {
+                            body: {
+                                sender_id: senderId,
+                                to,
+                                message: buildMessage('template', template),
+                            },
                         });
                     }
-                    else if (operation === 'getConversation') {
-                        responseData = await callApi('POST', '/api/v1/whatsapp/get/conversation', {
-                            phone_number_id: this.getNodeParameter('phoneNumberId', i),
-                            phone_number: this.getNodeParameter('phoneNumber', i),
-                            limit: this.getNodeParameter('limit', i),
-                            offset: this.getNodeParameter('offset', i),
+                    else if (['sendImage', 'sendVideo', 'sendAudio', 'sendDocument'].includes(operation)) {
+                        const mediaType = operation.replace('send', '').toLowerCase();
+                        const media = { url: this.getNodeParameter('mediaUrl', i) };
+                        const caption = this.getNodeParameter('caption', i, '');
+                        if (caption && mediaType !== 'audio')
+                            media.caption = caption;
+                        if (mediaType === 'document') {
+                            const filename = this.getNodeParameter('filename', i, '');
+                            if (filename)
+                                media.filename = filename;
+                        }
+                        responseData = await callApi('POST', '/api/v2/whatsapp/messages', {
+                            body: {
+                                sender_id: senderId,
+                                to,
+                                message: buildMessage(mediaType, media),
+                            },
                         });
                     }
-                    else if (operation === 'getStatus') {
-                        responseData = await callApi('POST', '/api/v1/whatsapp/get/message-status', {
-                            wa_message_id: this.getNodeParameter('waMessageId', i),
-                            whatsapp_bot_id: this.getNodeParameter('whatsappBotId', i),
+                    else if (operation === 'sendLocation') {
+                        const location = {
+                            latitude: this.getNodeParameter('latitude', i),
+                            longitude: this.getNodeParameter('longitude', i),
+                        };
+                        const placeName = this.getNodeParameter('placeName', i, '');
+                        const address = this.getNodeParameter('address', i, '');
+                        if (placeName)
+                            location.name = placeName;
+                        if (address)
+                            location.address = address;
+                        responseData = await callApi('POST', '/api/v2/whatsapp/messages', {
+                            body: {
+                                sender_id: senderId,
+                                to,
+                                message: buildMessage('location', location),
+                            },
                         });
                     }
-                    else if (operation === 'getPostbacks') {
-                        responseData = await callApi('POST', '/api/v1/whatsapp/get/post-back-list', {
-                            phone_number_id: this.getNodeParameter('phoneNumberId', i),
+                    else if (operation === 'sendReaction') {
+                        responseData = await callApi('POST', '/api/v2/whatsapp/messages', {
+                            body: {
+                                sender_id: senderId,
+                                to,
+                                message: buildMessage('reaction', {
+                                    message_id: this.getNodeParameter('reactionMessageId', i),
+                                    emoji: this.getNodeParameter('emoji', i),
+                                }),
+                            },
                         });
                     }
                 }
-                // ── SUBSCRIBER ────────────────────────────────────────────────
-                else if (resource === 'subscriber') {
-                    if (operation === 'get') {
-                        responseData = await callApi('POST', '/api/v1/whatsapp/subscriber/get', {
-                            phone_number_id: this.getNodeParameter('phoneNumberId', i),
-                            phone_number: this.getNodeParameter('phoneNumber', i),
+                // ── GROUP ─────────────────────────────────────────────────────
+                else if (resource === 'group') {
+                    const senderId = this.getNodeParameter('senderId', i);
+                    if (operation === 'list') {
+                        responseData = await callApi('GET', '/api/v2/whatsapp/groups', { qs: { sender_id: senderId } });
+                    }
+                    else if (operation === 'listMembers') {
+                        const groupId = encodeURIComponent(this.getNodeParameter('groupId', i));
+                        responseData = await callApi('GET', `/api/v2/whatsapp/groups/${groupId}/members`, { qs: { sender_id: senderId } });
+                    }
+                    else if (operation === 'sendMessage') {
+                        const body = {
+                            sender_id: senderId,
+                            message: buildMessage('text', { body: this.getNodeParameter('messageBody', i) }),
+                        };
+                        const groupId = this.getNodeParameter('groupId', i, '');
+                        const groupName = this.getNodeParameter('groupName', i, '');
+                        if (groupId)
+                            body.group_id = groupId;
+                        if (groupName)
+                            body.group_name = groupName;
+                        const mentions = this.getNodeParameter('mentions', i, []);
+                        if (Array.isArray(mentions) && mentions.length)
+                            body.mentions = mentions;
+                        responseData = await callApi('POST', '/api/v2/whatsapp/groups/messages', { body });
+                    }
+                }
+                // ── TEMPLATE ──────────────────────────────────────────────────
+                else if (resource === 'template') {
+                    if (operation === 'create') {
+                        const body = {
+                            waba_id: this.getNodeParameter('wabaId', i),
+                            template_name: this.getNodeParameter('templateName', i),
+                            category: this.getNodeParameter('category', i),
+                            language: this.getNodeParameter('language', i),
+                            message_body: this.getNodeParameter('messageBody', i),
+                        };
+                        const headerText = this.getNodeParameter('headerText', i, '');
+                        const footerText = this.getNodeParameter('footerText', i, '');
+                        if (headerText)
+                            body.header_text = headerText;
+                        if (footerText)
+                            body.footer_text = footerText;
+                        const additionalFields = this.getNodeParameter('additionalFields', i, {});
+                        if (additionalFields.buttons)
+                            body.buttons = additionalFields.buttons;
+                        if (additionalFields.variable_examples)
+                            body.variable_examples = additionalFields.variable_examples;
+                        responseData = await callApi('POST', '/api/v2/templates/create', { body });
+                    }
+                }
+                // ── CAMPAIGN ──────────────────────────────────────────────────
+                else if (resource === 'campaign') {
+                    if (operation === 'create') {
+                        const recipientType = this.getNodeParameter('recipientType', i);
+                        const body = {
+                            name: this.getNodeParameter('campaignName', i),
+                            waba_id: this.getNodeParameter('wabaId', i),
+                            template_name: this.getNodeParameter('templateName', i),
+                            recipient_type: recipientType,
+                        };
+                        if (recipientType === 'specific_contacts') {
+                            const contactNumbers = this.getNodeParameter('contactNumbers', i, []);
+                            if (Array.isArray(contactNumbers) && contactNumbers.length)
+                                body.contact_numbers = contactNumbers;
+                        }
+                        else if (recipientType === 'tags') {
+                            const tagIds = this.getNodeParameter('tagIds', i, []);
+                            if (Array.isArray(tagIds) && tagIds.length)
+                                body.tag_ids = tagIds;
+                        }
+                        const variablesMapping = this.getNodeParameter('variablesMapping', i, {});
+                        if (variablesMapping && Object.keys(variablesMapping).length)
+                            body.variables_mapping = variablesMapping;
+                        const mediaUrl = this.getNodeParameter('mediaUrl', i, '');
+                        if (mediaUrl)
+                            body.media_url = mediaUrl;
+                        responseData = await callApi('POST', '/api/v2/campaigns', { body });
+                    }
+                    else if (operation === 'list') {
+                        responseData = await callApi('GET', '/api/v2/campaigns');
+                    }
+                }
+                // ── CONTACT ───────────────────────────────────────────────────
+                else if (resource === 'contact') {
+                    if (operation === 'create') {
+                        responseData = await callApi('POST', '/api/v2/contacts', {
+                            body: {
+                                phone_number: this.getNodeParameter('phoneNumber', i),
+                                name: this.getNodeParameter('name', i),
+                                email: this.getNodeParameter('email', i),
+                            },
                         });
                     }
                     else if (operation === 'list') {
-                        const orderBy = this.getNodeParameter('orderBy', i);
-                        responseData = await callApi('POST', '/api/v1/whatsapp/subscriber/list', {
-                            phone_number_id: this.getNodeParameter('phoneNumberId', i),
-                            limit: this.getNodeParameter('limit', i),
-                            offset: this.getNodeParameter('offset', i),
-                            orderBy: orderBy ? 1 : 0,
-                        });
-                    }
-                    else if (operation === 'create') {
-                        responseData = await callApi('POST', '/api/v1/whatsapp/subscriber/create', {
-                            phoneNumberID: this.getNodeParameter('phoneNumberId', i),
-                            name: this.getNodeParameter('name', i),
-                            phoneNumber: this.getNodeParameter('phoneNumber', i),
-                        });
-                    }
-                    else if (operation === 'update') {
-                        const updateFields = this.getNodeParameter('updateFields', i);
-                        responseData = await callApi('POST', '/api/v1/whatsapp/subscriber/update', {
-                            phone_number_id: this.getNodeParameter('phoneNumberId', i),
-                            phone_number: this.getNodeParameter('phoneNumber', i),
-                            ...updateFields,
-                        });
-                    }
-                    else if (operation === 'delete') {
-                        responseData = await callApi('POST', '/api/v1/whatsapp/subscriber/delete', {
-                            phone_number_id: this.getNodeParameter('phoneNumberId', i),
-                            phone_number: this.getNodeParameter('phoneNumber', i),
-                        });
-                    }
-                    else if (operation === 'resetFlow') {
-                        responseData = await callApi('POST', '/api/v1/whatsapp/subscriber/reset/user-input-flow', {
-                            phone_number_id: this.getNodeParameter('phoneNumberId', i),
-                            phone_number: this.getNodeParameter('phoneNumber', i),
-                        });
-                    }
-                    else if (operation === 'assignTeam') {
-                        responseData = await callApi('POST', '/api/v1/whatsapp/subscriber/chat/assign-to-team-member', {
-                            phone_number_id: this.getNodeParameter('phoneNumberId', i),
-                            phone_number: this.getNodeParameter('phoneNumber', i),
-                            team_member_id: this.getNodeParameter('teamMemberId', i),
-                        });
-                    }
-                    else if (operation === 'assignCustomFields') {
-                        responseData = await callApi('POST', '/api/v1/whatsapp/subscriber/chat/assign-custom-fields', {
-                            phone_number_id: this.getNodeParameter('phoneNumberId', i),
-                            phone_number: this.getNodeParameter('phoneNumber', i),
-                            custom_fields: JSON.stringify(this.getNodeParameter('customFields', i)),
-                        });
-                    }
-                    else if (operation === 'listCustomFields') {
-                        responseData = await callApi('POST', '/api/v1/whatsapp/subscriber/custom-fields/list', {});
-                    }
-                    else if (operation === 'assignLabels') {
-                        responseData = await callApi('POST', '/api/v1/whatsapp/subscriber/chat/assign-labels', {
-                            phone_number_id: this.getNodeParameter('phoneNumberId', i),
-                            phone_number: this.getNodeParameter('phoneNumber', i),
-                            label_ids: this.getNodeParameter('labelIds', i),
-                        });
-                    }
-                    else if (operation === 'removeLabels') {
-                        responseData = await callApi('POST', '/api/v1/whatsapp/subscriber/chat/remove-labels', {
-                            phone_number_id: this.getNodeParameter('phoneNumberId', i),
-                            phone_number: this.getNodeParameter('phoneNumber', i),
-                            label_ids: this.getNodeParameter('labelIds', i),
-                        });
-                    }
-                    else if (operation === 'assignSequences') {
-                        responseData = await callApi('POST', '/api/v1/whatsapp/subscriber/chat/assign-sequence', {
-                            phone_number_id: this.getNodeParameter('phoneNumberId', i),
-                            phone_number: this.getNodeParameter('phoneNumber', i),
-                            sequence_ids: this.getNodeParameter('sequenceIds', i),
-                        });
-                    }
-                    else if (operation === 'removeSequences') {
-                        responseData = await callApi('POST', '/api/v1/whatsapp/subscriber/chat/remove-sequence', {
-                            phone_number_id: this.getNodeParameter('phoneNumberId', i),
-                            phone_number: this.getNodeParameter('phoneNumber', i),
-                            sequence_ids: this.getNodeParameter('sequenceIds', i),
-                        });
-                    }
-                    else if (operation === 'addNote') {
-                        responseData = await callApi('POST', '/api/v1/whatsapp/subscriber/chat/add-notes', {
-                            phone_number_id: this.getNodeParameter('phoneNumberId', i),
-                            phone_number: this.getNodeParameter('phoneNumber', i),
-                            note_text: this.getNodeParameter('noteText', i),
-                        });
-                    }
-                }
-                // ── LABEL ─────────────────────────────────────────────────────
-                else if (resource === 'label') {
-                    const phoneNumberId = this.getNodeParameter('phoneNumberId', i);
-                    if (operation === 'list') {
-                        responseData = await callApi('POST', '/api/v1/whatsapp/label/list', { phone_number_id: phoneNumberId });
-                    }
-                    else if (operation === 'create') {
-                        responseData = await callApi('POST', '/api/v1/whatsapp/label/create', {
-                            phone_number_id: phoneNumberId,
-                            label_name: this.getNodeParameter('labelName', i),
-                        });
-                    }
-                }
-                // ── CATALOG ───────────────────────────────────────────────────
-                else if (resource === 'catalog') {
-                    if (operation === 'list') {
-                        responseData = await callApi('POST', '/api/v1/whatsapp/catalog/list', {});
-                    }
-                    else if (operation === 'sync') {
-                        responseData = await callApi('POST', '/api/v1/whatsapp/catalog/sync', {
-                            whatsapp_catalog_id: this.getNodeParameter('catalogId', i),
-                        });
-                    }
-                    else if (operation === 'listOrders') {
-                        const catalogId = this.getNodeParameter('catalogId', i);
-                        const body = {};
-                        if (catalogId)
-                            body.whatsapp_catalog_id = catalogId;
-                        responseData = await callApi('POST', '/api/v1/whatsapp/catalog/order/list', body);
-                    }
-                    else if (operation === 'updateOrder') {
-                        responseData = await callApi('POST', '/api/v1/whatsapp/catalog/order/status-change', {
-                            order_unique_id: this.getNodeParameter('orderUniqueId', i),
-                            cart_status: this.getNodeParameter('cartStatus', i),
-                        });
-                    }
-                }
-                // ── BOT ───────────────────────────────────────────────────────
-                else if (resource === 'bot') {
-                    if (operation === 'triggerFlow') {
-                        responseData = await callApi('POST', '/api/v1/whatsapp/trigger-bot', {
-                            phone_number_id: this.getNodeParameter('phoneNumberId', i),
-                            bot_flow_unique_id: this.getNodeParameter('botFlowUniqueId', i),
-                            phone_number: this.getNodeParameter('phoneNumber', i),
-                        });
-                    }
-                    else if (operation === 'listTemplates') {
-                        responseData = await callApi('POST', '/api/v1/whatsapp/template/list', {
-                            phone_number_id: this.getNodeParameter('phoneNumberId', i),
-                        });
-                    }
-                }
-                // ── ACCOUNT ───────────────────────────────────────────────────
-                else if (resource === 'account') {
-                    if (operation === 'connect') {
-                        responseData = await callApi('POST', '/api/v1/whatsapp/account/connect', {
-                            user_id: this.getNodeParameter('userId', i),
-                            whatsapp_business_account_id: this.getNodeParameter('whatsappBusinessAccountId', i),
-                            access_token: this.getNodeParameter('accessToken', i),
-                        });
-                    }
-                }
-                // ── USER ──────────────────────────────────────────────────────
-                else if (resource === 'user') {
-                    if (operation === 'getLoginUrl') {
-                        const email = this.getNodeParameter('email', i);
-                        const additionalFields = this.getNodeParameter('additionalFields', i);
-                        const body = { email };
-                        if (additionalFields.name)
-                            body.name = additionalFields.name;
-                        if (additionalFields.mobile)
-                            body.mobile = additionalFields.mobile;
-                        if (additionalFields.package_id)
-                            body.package_id = additionalFields.package_id;
-                        if (additionalFields.expired_date)
-                            body.expired_date = additionalFields.expired_date;
-                        if (additionalFields.status !== undefined)
-                            body.status = additionalFields.status;
-                        if (additionalFields.create_on_fail !== undefined) {
-                            body.create_on_fail = additionalFields.create_on_fail ? 1 : 0;
-                        }
-                        responseData = await callApi('POST', '/api/v1/user/get/direct-login-url', body);
+                        responseData = await callApi('GET', '/api/v2/contacts');
                     }
                 }
                 else {
                     throw new n8n_workflow_1.NodeOperationError(this.getNode(), `Unknown resource: ${resource}`);
                 }
                 // Normalise response
-                if (Array.isArray(responseData === null || responseData === void 0 ? void 0 : responseData.message)) {
-                    returnData.push(...responseData.message.map((item) => ({ json: item, pairedItem: { item: i } })));
+                const arrayKey = ['data', 'contacts', 'campaigns'].find((key) => Array.isArray(responseData === null || responseData === void 0 ? void 0 : responseData[key]));
+                if (arrayKey) {
+                    returnData.push(...responseData[arrayKey].map((item) => ({ json: item, pairedItem: { item: i } })));
                 }
                 else {
                     returnData.push({ json: responseData, pairedItem: { item: i } });
@@ -304,7 +271,7 @@ class Greenbubble {
             }
             catch (error) {
                 if (this.continueOnFail()) {
-                    returnData.push({ json: { error: error.message }, pairedItem: i });
+                    returnData.push({ json: { error: error.message }, pairedItem: { item: i } });
                     continue;
                 }
                 if (error instanceof n8n_workflow_1.NodeApiError || error instanceof n8n_workflow_1.NodeOperationError)

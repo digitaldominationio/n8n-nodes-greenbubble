@@ -27,7 +27,7 @@ export const operationOptions: INodeProperties[] = [
 		noDataExpression: true,
 		displayOptions: { show: { resource: ['sender'] } },
 		options: [
-			{ name: 'List Senders', value: 'list', action: 'List all WhatsApp senders in a workspace' },
+			{ name: 'List Senders', value: 'list', action: 'List all senders in a workspace' },
 		],
 		default: 'list',
 	},
@@ -40,14 +40,14 @@ export const operationOptions: INodeProperties[] = [
 		noDataExpression: true,
 		displayOptions: { show: { resource: ['message'] } },
 		options: [
-			{ name: 'Send Text', value: 'sendText', action: 'Send a free-form text message' },
-			{ name: 'Send Template', value: 'sendTemplate', action: 'Send a Meta-approved template message' },
-			{ name: 'Send Image', value: 'sendImage', action: 'Send an image via public URL' },
-			{ name: 'Send Video', value: 'sendVideo', action: 'Send a video via public URL' },
 			{ name: 'Send Audio', value: 'sendAudio', action: 'Send an audio file via public URL' },
 			{ name: 'Send Document', value: 'sendDocument', action: 'Send a document via public URL' },
+			{ name: 'Send Image', value: 'sendImage', action: 'Send an image via public URL' },
 			{ name: 'Send Location', value: 'sendLocation', action: 'Send a location pin' },
 			{ name: 'Send Reaction', value: 'sendReaction', action: 'React to a message with an emoji' },
+			{ name: 'Send Template', value: 'sendTemplate', action: 'Send an approved template message' },
+			{ name: 'Send Text', value: 'sendText', action: 'Send a text message' },
+			{ name: 'Send Video', value: 'sendVideo', action: 'Send a video via public URL' },
 		],
 		default: 'sendText',
 	},
@@ -60,7 +60,7 @@ export const operationOptions: INodeProperties[] = [
 		noDataExpression: true,
 		displayOptions: { show: { resource: ['group'] } },
 		options: [
-			{ name: 'List Groups', value: 'list', action: 'List joined WhatsApp groups for a Scan Device sender' },
+			{ name: 'List Groups', value: 'list', action: 'List joined groups for a scan device sender' },
 			{ name: 'List Group Members', value: 'listMembers', action: 'List members of a joined group' },
 			{ name: 'Send Group Message', value: 'sendMessage', action: 'Send a message to a joined group' },
 		],
@@ -75,7 +75,7 @@ export const operationOptions: INodeProperties[] = [
 		noDataExpression: true,
 		displayOptions: { show: { resource: ['template'] } },
 		options: [
-			{ name: 'Create Template', value: 'create', action: 'Create a Meta message template' },
+			{ name: 'Create Template', value: 'create', action: 'Create a message template' },
 		],
 		default: 'create',
 	},
@@ -127,7 +127,7 @@ const recipientField = (resources: string[], operations: string[]): INodePropert
 	default: '',
 	required: true,
 	displayOptions: { show: { resource: resources, operation: operations } },
-	description: 'Recipient WhatsApp number with country code, digits only (no +). Example: 919876543210',
+	description: 'Recipient WhatsApp number with country code, digits only (no +). Example: 919876543210.',
 });
 
 // ─── Field definitions ────────────────────────────────────────────────────────
@@ -140,7 +140,7 @@ export const fields: INodeProperties[] = [
 		type: 'string',
 		default: '',
 		displayOptions: { show: { resource: ['sender'], operation: ['list'] } },
-		description: 'Optional. API keys bind to a workspace automatically; set this only when the key is not workspace-scoped',
+		description: 'Optional. API keys bind to a workspace automatically; set this only when the key is not workspace-scoped.',
 	},
 
 	// ── MESSAGE: Send Text ────────────────────────────────────────────────────
@@ -173,7 +173,7 @@ export const fields: INodeProperties[] = [
 		type: 'string',
 		default: 'en_US',
 		displayOptions: { show: { resource: ['message'], operation: ['sendTemplate'] } },
-		description: 'Template language, e.g. en_US. Defaults to the template language when omitted',
+		description: 'Template language, e.g. en_US. Defaults to the template language when omitted.',
 	},
 	{
 		displayName: 'Body Variables',
@@ -189,7 +189,7 @@ export const fields: INodeProperties[] = [
 		type: 'json',
 		default: '{}',
 		displayOptions: { show: { resource: ['message'], operation: ['sendTemplate'] } },
-		description: 'Optional header media for templates with an image/video/document header, e.g. {"type":"image","url":"https://example.com/banner.jpg"}',
+		description: 'Optional header media for templates with an image/video/document header. Provide the media type and a public media URL.',
 	},
 
 	// ── MESSAGE: Send Media (image / video / audio / document) ────────────────
@@ -263,7 +263,7 @@ export const fields: INodeProperties[] = [
 		default: '',
 		required: true,
 		displayOptions: { show: { resource: ['message'], operation: ['sendReaction'] } },
-		description: 'Channel message ID to react to (wamid / device id from a send response or inbound webhook)',
+		description: 'Channel message ID to react to (wamid / device ID from a send response or inbound webhook)',
 	},
 	{
 		displayName: 'Emoji',
@@ -292,7 +292,7 @@ export const fields: INodeProperties[] = [
 		type: 'string',
 		default: '',
 		displayOptions: { show: { resource: ['group'], operation: ['sendMessage'] } },
-		description: 'Group JID ending in @g.us (or bare numeric ID). Preferred over name',
+		description: 'Group JID ending in @g.us (or bare numeric ID). Preferred over name.',
 	},
 	{
 		displayName: 'Group Name',
@@ -300,7 +300,7 @@ export const fields: INodeProperties[] = [
 		type: 'string',
 		default: '',
 		displayOptions: { show: { resource: ['group'], operation: ['sendMessage'] } },
-		description: 'Exact joined group subject/name (case-insensitive). Provide Group ID or Group Name',
+		description: 'Exact joined group subject/name (case-insensitive). Provide Group ID or Group Name.',
 	},
 	{
 		displayName: 'Message Body',
@@ -370,7 +370,7 @@ export const fields: INodeProperties[] = [
 		default: '',
 		required: true,
 		displayOptions: { show: { resource: ['template'], operation: ['create'] } },
-		description: 'Template body text. Use {{1}}, {{2}} for variables',
+		description: 'Template body text. Use {{1}}, {{2}} for variables.',
 	},
 	{
 		displayName: 'Header Text',

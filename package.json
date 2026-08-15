@@ -1,6 +1,6 @@
 {
   "name": "n8n-nodes-greenbubble",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "n8n community node for GreenBubble.io WhatsApp automation platform",
   "keywords": [
     "n8n-community-node-package",
@@ -21,7 +21,7 @@
   },
   "main": "dist/index.js",
   "scripts": {
-    "build": "tsc && cp nodes/Greenbubble/greenbubble.svg dist/nodes/Greenbubble/greenbubble.svg && cp nodes/Greenbubble/greenbubble.svg dist/credentials/greenbubble.svg",
+    "build": "tsc && cp nodes/Greenbubble/greenbubble.svg nodes/Greenbubble/greenbubble-dark.svg dist/nodes/Greenbubble/ && cp nodes/Greenbubble/greenbubble.svg nodes/Greenbubble/greenbubble-dark.svg dist/credentials/",
     "dev": "tsc --watch",
     "format": "prettier nodes credentials --write",
     "lint": "eslint nodes credentials --ext .ts",

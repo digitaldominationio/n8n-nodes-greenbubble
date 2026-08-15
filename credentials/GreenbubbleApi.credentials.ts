@@ -8,7 +8,7 @@ import {
 export class GreenbubbleApi implements ICredentialType {
 	name = 'greenbubbleApi';
 	displayName = 'GreenBubble API';
-	icon = 'file:greenbubble.svg' as const;
+	icon = { light: 'file:greenbubble.svg', dark: 'file:greenbubble-dark.svg' } as const;
 	documentationUrl = 'https://app.greenbubble.io/developer';
 	properties: INodeProperties[] = [
 		{

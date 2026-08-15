@@ -2,7 +2,10 @@ import { IAuthenticateGeneric, ICredentialTestRequest, ICredentialType, INodePro
 export declare class GreenbubbleApi implements ICredentialType {
     name: string;
     displayName: string;
-    icon: "file:greenbubble.svg";
+    icon: {
+        readonly light: "file:greenbubble.svg";
+        readonly dark: "file:greenbubble-dark.svg";
+    };
     documentationUrl: string;
     properties: INodeProperties[];
     authenticate: IAuthenticateGeneric;

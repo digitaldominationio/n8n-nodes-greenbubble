@@ -7,6 +7,7 @@ import {
 	NodeConnectionTypes,
 	NodeOperationError,
 } from 'n8n-workflow';
+import type { JsonObject } from 'n8n-workflow';
 
 import { resourceOptions, operationOptions, fields } from './descriptions';
 
@@ -14,9 +15,10 @@ export class Greenbubble implements INodeType {
 	description: INodeTypeDescription = {
 		displayName: 'GreenBubble',
 		name: 'greenbubble',
-		icon: 'file:greenbubble.svg',
+		icon: { light: 'file:greenbubble.svg', dark: 'file:greenbubble-dark.svg' },
 		group: ['transform'],
 		version: 1,
+		usableAsTool: true,
 		subtitle: '={{$parameter["operation"] + ": " + $parameter["resource"]}}',
 		description: 'Interact with the GreenBubble WhatsApp automation platform',
 		defaults: {
@@ -293,8 +295,7 @@ export class Greenbubble implements INodeType {
 					});
 					continue;
 				}
-				if (error instanceof NodeApiError || error instanceof NodeOperationError) throw error;
-				throw new NodeApiError(this.getNode(), error as any);
+				throw new NodeApiError(this.getNode(), error as JsonObject);
 			}
 		}
 

@@ -75,6 +75,24 @@ The API key is sent as an `x-api-key` header and is bound to a workspace automat
 
 ---
 
+## Usage
+
+### Send a text message
+
+1. Open an n8n workflow and add the **GreenBubble** node (search for "GreenBubble" in the node panel).
+2. Set the node's credentials to a **GreenBubble API** credential (see [Credentials](#credentials)).
+3. In the node's parameters, set **Resource** to `Message`.
+4. Set **Operation** to `Send Text`.
+5. Fill in:
+   - **Sender ID** — copy a sender's `wa_snd_…` ID by running a `Sender → List Senders` node first, or paste one you already have.
+   - **To** — the recipient's WhatsApp number with country code, digits only (no `+`). Example: `919876543210`.
+   - **Message Body** — the text to send.
+6. Run the workflow. The node returns the GreenBubble API response, including the sent message ID.
+
+> Tip: pair it with a **Sender → List Senders** node and reference its output with an expression, e.g. `{{ $json.id }}`, so you don't have to hard-code sender IDs.
+
+---
+
 ## Development
 
 ```bash

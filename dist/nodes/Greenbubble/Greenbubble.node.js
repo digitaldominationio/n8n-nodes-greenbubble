@@ -8,9 +8,10 @@ class Greenbubble {
         this.description = {
             displayName: 'GreenBubble',
             name: 'greenbubble',
-            icon: 'file:greenbubble.svg',
+            icon: { light: 'file:greenbubble.svg', dark: 'file:greenbubble-dark.svg' },
             group: ['transform'],
             version: 1,
+            usableAsTool: true,
             subtitle: '={{$parameter["operation"] + ": " + $parameter["resource"]}}',
             description: 'Interact with the GreenBubble WhatsApp automation platform',
             defaults: {
@@ -284,8 +285,6 @@ class Greenbubble {
                     });
                     continue;
                 }
-                if (error instanceof n8n_workflow_1.NodeApiError || error instanceof n8n_workflow_1.NodeOperationError)
-                    throw error;
                 throw new n8n_workflow_1.NodeApiError(this.getNode(), error);
             }
         }

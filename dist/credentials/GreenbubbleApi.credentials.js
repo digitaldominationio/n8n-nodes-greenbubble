@@ -5,7 +5,7 @@ class GreenbubbleApi {
     constructor() {
         this.name = 'greenbubbleApi';
         this.displayName = 'GreenBubble API';
-        this.icon = 'file:greenbubble.svg';
+        this.icon = { light: 'file:greenbubble.svg', dark: 'file:greenbubble-dark.svg' };
         this.documentationUrl = 'https://app.greenbubble.io/developer';
         this.properties = [
             {

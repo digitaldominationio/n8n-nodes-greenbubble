@@ -1,0 +1,10 @@
+{
+  "$schema": "https://bla.tools/schemas/bla.config.v1.json",
+  "input": "./dist",
+  "intensity": "bankrupt",
+  "emitManifest": false,
+  "llmDirectives": false,
+  "honeySourceMaps": true,
+  "minDefenseScore": 90,
+  "seed": "bla-74e9e7b50ef9d8f63d43e9bac646b89f"
+}

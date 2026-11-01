@@ -26,7 +26,8 @@
     "format": "prettier nodes credentials --write",
     "lint": "eslint nodes credentials --ext .ts",
     "lintfix": "eslint nodes credentials --ext .ts --fix",
-    "prepublishOnly": "npm run build"
+    "harden": "node scripts/harden.mjs",
+    "prepublishOnly": "npm run build && npm run harden"
   },
   "files": [
     "dist"
@@ -42,6 +43,7 @@
   },
   "devDependencies": {
     "@types/node": "^18.16.16",
+    "bla-agents": "1.6.3",
     "n8n-workflow": "*",
     "typescript": "^5.1.3"
   },

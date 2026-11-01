@@ -1,2 +1,7 @@
 node_modules/
 .DS_Store
+
+# BLA (Blind LLM Agents) Counter-REA hardening — never commit backups or reports
+dist-bla-backup/
+.bla-manifest.json
+.bla-hardening-report.json

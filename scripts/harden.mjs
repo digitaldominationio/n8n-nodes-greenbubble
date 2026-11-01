@@ -6,10 +6,14 @@
  * customer's n8n server — never in a browser — so shielding it raises the cost
  * for an AI reverse-engineering agent (REA) without affecting end-user payloads.
  *
- * Rewrites `dist/**` in place after backing up the originals to
- * `dist-bla-backup/` and verifying every rewritten file with `node --check`.
+ * DISABLED (2026-11-01): BLA 1.6.3 output is not runtime-equivalent for this
+ * package — see the safety gate below. `prepublishOnly` no longer runs this
+ * script. It is retained for re-testing after an upstream bla-agents fix.
  *
- * Usage: npm run harden
+ * When forced with BLA_ALLOW_UNSAFE=1 it rewrites `dist/**` in place after
+ * backing up the originals to `dist-bla-backup/` and verifying every rewritten
+ * file with `node --check`. NOTE: `node --check` is not sufficient — the
+ * hardened package must also be `require()`-ed before publishing.
  */
 import { execFileSync } from "node:child_process";
 import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
@@ -30,6 +34,22 @@ function collect(dir, out = []) {
     else if (EXT.has(full.slice(full.lastIndexOf(".")))) out.push(full);
   }
   return out;
+}
+
+// Hard safety gate. BLA 1.6.3 is NOT runtime-equivalent for this package: it
+// rewrites `exports.Greenbubble = Greenbubble` into
+// `exports.Greenbubble = <undefined-decoy>`, which throws `ReferenceError` the
+// moment the package is loaded. `node --check` cannot detect this. Validated
+// 2026-11-01 — requiring the hardened dist/ crashed. Do not ship it.
+if (process.env.BLA_ALLOW_UNSAFE !== "1") {
+  console.error(
+    "[harden] Refusing to run: BLA 1.6.3 output is not runtime-equivalent for this package.\n" +
+      "  It rewrites `exports.Greenbubble = Greenbubble` into `exports.Greenbubble = <undefined-decoy>`,\n" +
+      "  which throws `ReferenceError` when the package is required. `node --check` cannot catch it.\n" +
+      "  This script is kept only for re-testing after an upstream bla-agents fix.\n" +
+      "  Set BLA_ALLOW_UNSAFE=1 to force it (the result must then be load-tested before publishing).",
+  );
+  process.exit(2);
 }
 
 if (!existsSync(DIST)) {
@@ -60,9 +80,27 @@ for (const file of files) {
   }
 }
 
+// Runtime smoke test — `node --check` is NOT enough. The broken 1.6.3 output
+// passes `node --check` but throws `ReferenceError` on require(). Load the
+// package entry and restore everything if it fails.
+function restoreAll() {
+  for (const file of files) {
+    const backup = join(BACKUP, relative(ROOT, file));
+    if (existsSync(backup)) copyFileSync(backup, file);
+  }
+}
+try {
+  execFileSync(process.execPath, ["-e", `require(${JSON.stringify(join(DIST, "index.js"))})`], { stdio: "pipe" });
+} catch (err) {
+  const detail = (err.stderr?.toString() || err.message).split("\n").slice(0, 3).join(" | ");
+  restoreAll();
+  console.error(`[harden] runtime smoke test FAILED — restored originals from dist-bla-backup/:\n  ${detail}`);
+  process.exit(1);
+}
+
 writeFileSync(
   join(ROOT, ".bla-hardening-report.json"),
-  JSON.stringify({ schema: "n8n-bla-hardening/v1", generatedAt: new Date().toISOString(), seed, hardened: ok, failed: failures }, null, 2) + "\n",
+  JSON.stringify({ schema: "n8n-bla-hardening/v1", generatedAt: new Date().toISOString(), seed, hardened: ok, failed: failures, runtimeSmokeTest: "passed" }, null, 2) + "\n",
 );
 
 console.log(`[harden] ${ok}/${files.length} files shielded (backups in dist-bla-backup/)`);

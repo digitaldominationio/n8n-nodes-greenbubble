@@ -27,7 +27,7 @@
     "lint": "eslint nodes credentials --ext .ts",
     "lintfix": "eslint nodes credentials --ext .ts --fix",
     "harden": "node scripts/harden.mjs",
-    "prepublishOnly": "npm run build && npm run harden"
+    "prepublishOnly": "npm run build"
   },
   "files": [
     "dist"

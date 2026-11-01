@@ -103,6 +103,23 @@ npm run dev   # watch mode
 
 ---
 
+## Security / release hardening
+
+Counter-REA (AI reverse-engineering) hardening of the published `dist/**` is
+**disabled**. The `BLA_ALLOW_UNSAFE`-gated `npm run harden` script is retained
+for re-testing only.
+
+BLA `1.6.3` is not runtime-equivalent for this package: it rewrites
+`exports.Greenbubble = Greenbubble` into
+`exports.Greenbubble = <undefined-decoy>`, which throws `ReferenceError` the
+moment the package is loaded. `node --check` cannot detect this. Validated
+2026-11-01 — requiring a hardened `dist/` crashed. `prepublishOnly` therefore
+only runs `npm run build`. Re-enable harden only after an upstream `bla-agents`
+fix and after the hardened `dist/` is load-tested (`require()`), not just
+`node --check`-ed.
+
+---
+
 ## Author
 
 **Biswajit Pradhan**
